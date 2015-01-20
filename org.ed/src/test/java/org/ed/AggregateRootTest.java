@@ -65,6 +65,7 @@ public class AggregateRootTest {
 	@Test
 	public void test() {
 		AggregateRootT es = new AggregateRootT();
+		es.init();
 
 		es.apply(new PublicEventMessageT());
 		es.apply(new ProtectedEventMessageT());
