@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -128,11 +129,11 @@ public class FileRepository<T extends AggregateRoot> implements Repository<T>, C
 	 * 文件资料库构造函数
 	 * 
 	 * @param repositoryStorageDir
-	 *          资料库存储目录
+	 *            资料库存储目录
 	 * @param name
-	 *          业务名称
+	 *            业务名称
 	 * @param creator
-	 *          业务实例构造器
+	 *            业务实例构造器
 	 */
 	public FileRepository(String repositoryStorageDir, String name, Function<String, T> creator) {
 		this.repositoryStorageDir = FileSystems.getDefault().getPath(repositoryStorageDir, name);
@@ -434,10 +435,15 @@ public class FileRepository<T extends AggregateRoot> implements Repository<T>, C
 
 		IdleScheduledFutureAndRunnableCacheEntry cacheEntry = idleTimers.get(fileName);
 
-		if (cacheEntry.sf != null && (!cacheEntry.sf.isCancelled() || !cacheEntry.sf.isDone()))
+		if (cacheEntry.sf != null && !cacheEntry.sf.isCancelled() && !cacheEntry.sf.isDone())
 			cacheEntry.sf.cancel(false);
-		ScheduledFuture<?> schedule = scheduledService.schedule(cacheEntry.runnable, IDLE_DELAY, TimeUnit.MILLISECONDS);
-		cacheEntry.sf = schedule;
+
+		try {
+			ScheduledFuture<?> schedule = scheduledService.schedule(cacheEntry.runnable, IDLE_DELAY, TimeUnit.MILLISECONDS);
+			cacheEntry.sf = schedule;
+		} catch (RejectedExecutionException e) {
+			// 线程池中断
+		}
 	}
 
 	/***
@@ -451,7 +457,7 @@ public class FileRepository<T extends AggregateRoot> implements Repository<T>, C
 	 * </p>
 	 * 
 	 * @param fileFullName
-	 *          文件名称，包括路径和扩展名
+	 *            文件名称，包括路径和扩展名
 	 * @return 该文件的channel
 	 */
 	private FileChannel getFileChannel(String fileFullName) {
