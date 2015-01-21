@@ -297,24 +297,12 @@ public class FileRepository<T extends AggregateRoot> implements Repository<T>, C
 				@Override
 				public void run() {
 					try {
-						// System.out.println(eventMessageByteArrayOutputStream.toByteArray().length);
-						//
-						// for(byte b :
-						// eventMessageByteArrayOutputStream.toByteArray())
-						// {
-						// System.out.println(String.format("%x", b));
-						// }
 						eventMessageByteArrayOutputStream.reset();
 						eventMessageByteArrayOutputStream.write(SERIALIZE_HEADER);
 						eventMessageObjectOutputStream.reset();
 						eventMessageObjectOutputStream.writeObject(em);
 						eventMessageObjectOutputStream.flush();
-						// ObjectOutputStream oos = new
-						// ObjectOutputStream(eventMessageByteArrayOutputStream);
-						// oos.writeObject(em);
-						// oos.flush();
 						byte[] rawData = eventMessageByteArrayOutputStream.toByteArray();
-						// System.out.println(rawData.length);
 
 						FileChannel channel = getFileChannel(evt_file);
 						ByteBuffer buffer = evtFileBufferCache.get(evt_file);
