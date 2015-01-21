@@ -81,10 +81,10 @@ public class ObjectStreamRepository<T extends AggregateRoot> implements Reposito
 				String evt_fileFullName = this.repositoryStorageDir.resolve(id + EVENT_SUFFIX).toString();
 				FileChannel evt_channel = getFileChannel(evt_fileFullName);
 				getObjectOutput(evt_channel).flush();
-				long positing = evt_channel.size();
+				long position = evt_channel.size();
 
 				ByteBuffer positionBytes = ByteBuffer.allocate(Long.BYTES);
-				positionBytes.putLong(positing);
+				positionBytes.putLong(position);
 				positionBytes.flip();
 				snap_channel.write(positionBytes);
 				snap_fstoo.writeObject(es);
@@ -128,13 +128,14 @@ public class ObjectStreamRepository<T extends AggregateRoot> implements Reposito
 		try {// 没用nio，以后有空改，现在的load效率极低
 			snap_channel = FileChannel.open(snap_file, StandardOpenOption.READ);
 			FileChannel evt_channel = getFileChannel(evt_file.toString());
-			evt_channel.position(0);
 
 			// 加载快照
 			ByteBuffer positionBytes = ByteBuffer.allocate(Long.BYTES);
 			snap_channel.read(positionBytes);
 			positionBytes.flip();
 			long position = positionBytes.getLong();
+			evt_channel.position(position);
+			
 			snap_fstoi = new FSTObjectInput(Channels.newInputStream(snap_channel));
 			agg = (T) snap_fstoi.readObject();
 			agg.init();
