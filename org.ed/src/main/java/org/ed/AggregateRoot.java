@@ -15,17 +15,12 @@ public abstract class AggregateRoot implements Serializable {
 	private static final long serialVersionUID = 8265486901848966590L;
 
 	transient private Repository<?> repository;
-	transient private EventBus eventBus;
 
 	private Set<SubAggregate> subAggSet = new HashSet<SubAggregate>();
 	private String id;
 
 	void setRepository(Repository<?> repository) {
 		this.repository = repository;
-	}
-
-	void setEventBus(EventBus eventBus) {
-		this.eventBus = eventBus;
 	}
 
 	public String getId() {
@@ -56,11 +51,8 @@ public abstract class AggregateRoot implements Serializable {
 		}
 
 		if (repository != null) {
-			repository.addEvent(id, event);
-		}
-
-		if (eventBus != null) {
-			eventBus.publish(event);
+			event.setAggRootId(getId());
+			repository.addEvent(event);
 		}
 	}
 

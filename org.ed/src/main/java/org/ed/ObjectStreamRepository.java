@@ -165,7 +165,6 @@ public class ObjectStreamRepository<T extends AggregateRoot> implements Reposito
 			evt_fstoi.close();
 			// 为实体设置资料库，以便于实体库调用addEvent方法
 			agg.setRepository(this);
-			agg.setEventBus(eventBus);
 		} catch (IOException | ClassNotFoundException e) {
 			throw new RuntimeException(e);
 		} finally {
@@ -189,7 +188,6 @@ public class ObjectStreamRepository<T extends AggregateRoot> implements Reposito
 		T newAgg = creator.apply(id);
 		newAgg.init();
 		newAgg.setRepository(this);
-		newAgg.setEventBus(eventBus);
 		Path snap_file = this.repositoryStorageDir.resolve(id + SNAPSHOT_SUFFIX);
 		Path evt_file = this.repositoryStorageDir.resolve(id + EVENT_SUFFIX);
 
@@ -239,8 +237,8 @@ public class ObjectStreamRepository<T extends AggregateRoot> implements Reposito
 	int i = 0;
 
 	@Override
-	public void addEvent(String id, EventMessage em) {
-		String evt_file = this.repositoryStorageDir.toString() + "\\" + id + EVENT_SUFFIX;
+	public void addEvent(EventMessage em) {
+		String evt_file = this.repositoryStorageDir.toString() + "\\" + em.getAggRootId() + EVENT_SUFFIX;
 
 		FSTObjectOutput fstoo = getObjectOutput(getFileChannel(evt_file));
 		try {
@@ -249,6 +247,10 @@ public class ObjectStreamRepository<T extends AggregateRoot> implements Reposito
 			if (i % 1000 == 0)
 				fstoo.flush();
 		} catch (IOException e) {
+		}
+
+		if (eventBus != null) {
+			eventBus.publish(em);
 		}
 	}
 

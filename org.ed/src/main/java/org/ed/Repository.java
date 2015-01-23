@@ -71,9 +71,6 @@ public interface Repository<T extends AggregateRoot> extends Closeable {
 	/***
 	 * 添加业务事件
 	 * <p>
-	 * 根据业务id添加并记录事件
-	 * </p>
-	 * <p>
 	 * <b>此方法不该由应用调用。它是给{@link AggregateRoot#apply(EventMessage)}特定的接口</b>
 	 * </p>
 	 * 
@@ -82,5 +79,5 @@ public interface Repository<T extends AggregateRoot> extends Closeable {
 	 * @param em
 	 *            事件消息
 	 */
-	void addEvent(String id, EventMessage em);
+	void addEvent(EventMessage em);
 }
