@@ -1,12 +1,8 @@
 package org.ed;
 
 public class EventBusFactory {
-	static EventBus defaultEventBus;
-	
-	public static EventBus getOrCreateEventBus()
+	public static EventBus createEventBus()
 	{
-		if(defaultEventBus == null)
-			defaultEventBus = new DisruptorEventBus();
-		return defaultEventBus;
+		return new DisruptorEventBus();
 	}
 }
