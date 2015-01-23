@@ -16,7 +16,7 @@ public class EventMessage implements Serializable {
 		return aggRootId;
 	}
 
-	public void setAggRootId(String aggRootId) {
+	void setAggRootId(String aggRootId) {
 		this.aggRootId = aggRootId;
 	}
 }
