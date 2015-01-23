@@ -83,7 +83,7 @@ public class ObjectStreamRepository<T extends AggregateRoot> implements Reposito
 				file.createNewFile();
 				snap_channel = FileChannel.open(file.toPath(), StandardOpenOption.WRITE);
 				snap_fstoo = new FSTObjectOutput(Channels.newOutputStream(snap_channel));
-				
+
 				String evt_fileFullName = this.repositoryStorageDir.resolve(id + EVENT_SUFFIX).toString();
 				FileChannel evt_channel = getFileChannel(evt_fileFullName);
 				getObjectOutput(evt_channel).flush();
@@ -141,7 +141,7 @@ public class ObjectStreamRepository<T extends AggregateRoot> implements Reposito
 			positionBytes.flip();
 			long position = positionBytes.getLong();
 			evt_channel.position(position);
-			
+
 			snap_fstoi = new FSTObjectInput(Channels.newInputStream(snap_channel));
 			agg = (T) snap_fstoi.readObject();
 			agg.init();
@@ -295,11 +295,10 @@ public class ObjectStreamRepository<T extends AggregateRoot> implements Reposito
 	@Override
 	public void close() throws IOException {
 
-		for(String id : aggRootCache.keySet())
-		{
+		for (String id : aggRootCache.keySet()) {
 			snapshot(id);
 		}
-		
+
 		for (FSTObjectOutput foo : objectOutputCache.values()) {
 			foo.close();
 		}
@@ -307,5 +306,8 @@ public class ObjectStreamRepository<T extends AggregateRoot> implements Reposito
 		for (FileChannel channel : fileChannelCache.values()) {
 			channel.close();
 		}
+
+		if (eventBus != null)
+			eventBus.close();
 	}
 }
