@@ -16,7 +16,7 @@ public abstract class AggregateRoot implements Serializable {
 
 	transient private Repository<?> repository;
 	transient private EventBus eventBus;
-	
+
 	private Set<SubAggregate> subAggSet = new HashSet<SubAggregate>();
 	private String id;
 
@@ -57,6 +57,9 @@ public abstract class AggregateRoot implements Serializable {
 
 		if (repository != null) {
 			repository.addEvent(id, event);
+		}
+
+		if (eventBus != null) {
 			eventBus.publish(event);
 		}
 	}
