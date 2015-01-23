@@ -48,10 +48,13 @@ public class ObjectStreamRepository<T extends AggregateRoot> implements Reposito
 	 * 业务实体缓存
 	 */
 	private Map<String, AggregateRoot> aggRootCache;
+	private EventBus eventBus;
 
-	public ObjectStreamRepository(String repositoryStorageDir, String name, Function<String, T> creator) {
+	public ObjectStreamRepository(String repositoryStorageDir, String name, Function<String, T> creator, EventBus eventBus) {
+		this.eventBus = eventBus;
 		this.repositoryStorageDir = FileSystems.getDefault().getPath(repositoryStorageDir, name);
 		this.creator = creator;
+		this.eventBus = eventBus;
 
 		fileChannelCache = new HashMap<String, FileChannel>();
 		aggRootCache = new HashMap<String, AggregateRoot>();
@@ -162,6 +165,7 @@ public class ObjectStreamRepository<T extends AggregateRoot> implements Reposito
 			evt_fstoi.close();
 			// 为实体设置资料库，以便于实体库调用addEvent方法
 			agg.setRepository(this);
+			agg.setEventBus(eventBus);
 		} catch (IOException | ClassNotFoundException e) {
 			throw new RuntimeException(e);
 		} finally {
@@ -185,6 +189,7 @@ public class ObjectStreamRepository<T extends AggregateRoot> implements Reposito
 		T newAgg = creator.apply(id);
 		newAgg.init();
 		newAgg.setRepository(this);
+		newAgg.setEventBus(eventBus);
 		Path snap_file = this.repositoryStorageDir.resolve(id + SNAPSHOT_SUFFIX);
 		Path evt_file = this.repositoryStorageDir.resolve(id + EVENT_SUFFIX);
 
