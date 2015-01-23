@@ -24,13 +24,15 @@ public class DisruptorEventBus implements EventBus {
 				disruptor.shutdown(1, TimeUnit.MINUTES);
 			} catch (TimeoutException e) {
 			}
-			
+
 			executor.shutdownNow();
 		}
 	}
 
 	@Override
 	public void publish(EventMessage... events) {
+		if (disruptor == null)
+			return;
 		for (EventMessage event : events) {
 			RingBuffer<DisruptorEvent> ringBuffer = disruptor.getRingBuffer();
 			long sequence = ringBuffer.next();
@@ -50,9 +52,8 @@ public class DisruptorEventBus implements EventBus {
 		int bufferSize = 1024;
 		executor = Executors.newCachedThreadPool();
 		disruptor = new Disruptor<>(factory, bufferSize, executor);
-		
-		for(Object obj : eventListeners)
-		{
+
+		for (Object obj : eventListeners) {
 			EventHandlerTypeCache.registerHandler(obj.getClass());
 			disruptor.handleEventsWith(new DisruptorEventHandler(obj));
 		}
