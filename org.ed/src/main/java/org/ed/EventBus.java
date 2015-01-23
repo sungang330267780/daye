@@ -1,7 +1,8 @@
 package org.ed;
 
-public interface EventBus {
+import java.io.Closeable;
+
+public interface EventBus extends Closeable {
 	void publish(EventMessage... events);
-	void subscribe(Object eventListener);
-	void unsubscribe(Object eventListener);
+	void subscribe(Object... eventListeners);
 }

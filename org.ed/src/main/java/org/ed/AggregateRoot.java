@@ -35,10 +35,10 @@ public abstract class AggregateRoot implements Serializable {
 	}
 
 	public void init() {
-		AggregateTypeCache.registerAggregate(this.getClass());
+		EventHandlerTypeCache.registerHandler(this.getClass());
 		for (SubAggregate subAgg : subAggSet) {
 			subAgg.init();
-			subAgg.setParent(this);
+			subAgg.setAggregateRoot(this);
 		}
 	}
 
@@ -47,15 +47,15 @@ public abstract class AggregateRoot implements Serializable {
 	}
 
 	protected void apply(EventMessage event) {
-		AggregateTypeCache.invoke(this, event);
+		EventHandlerTypeCache.invoke(this, event);
 
 		for (SubAggregate subAgg : subAggSet) {
-			AggregateTypeCache.invoke(subAgg, event);
+			EventHandlerTypeCache.invoke(subAgg, event);
 		}
 
 		if (repository != null) {
 			repository.addEvent(id, event);
-			// TODO:以后加入事件发布代码
+			EventBusFactory.getOrCreateEventBus().publish(event);
 		}
 	}
 
@@ -67,7 +67,7 @@ public abstract class AggregateRoot implements Serializable {
 			return;
 
 		sa.init();
-		sa.setParent(this);
+		sa.setAggregateRoot(this);
 		subAggSet.add(sa);
 	}
 
@@ -76,6 +76,6 @@ public abstract class AggregateRoot implements Serializable {
 			return;
 
 		subAggSet.remove(sa);
-		sa.setParent(null);
+		sa.setAggregateRoot(null);
 	}
 }

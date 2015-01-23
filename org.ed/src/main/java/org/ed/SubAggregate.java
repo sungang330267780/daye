@@ -7,7 +7,7 @@ public abstract class SubAggregate implements Serializable {
 	private static final long serialVersionUID = 3409157327763461007L;
 	
 	private String id;
-	private AggregateRoot parent;
+	private AggregateRoot aggRoot;
 
 	public String getId() {
 		return id;
@@ -18,16 +18,21 @@ public abstract class SubAggregate implements Serializable {
 	}
 
 	void init() {
-		AggregateTypeCache.registerAggregate(this.getClass());
+		EventHandlerTypeCache.registerHandler(this.getClass());
 	}
 	
-	void Apply(EventMessage event)
+	protected void Apply(EventMessage event)
 	{
-		parent.apply(event);
+		aggRoot.apply(event);
 	}
 	
-	void setParent(AggregateRoot agg)
+	void setAggregateRoot(AggregateRoot aggRoot)
 	{
-		this.parent = agg;
+		this.aggRoot = aggRoot;
+	}
+	
+	protected AggregateRoot getAggregateRoot()
+	{
+		return this.aggRoot;
 	}
 }

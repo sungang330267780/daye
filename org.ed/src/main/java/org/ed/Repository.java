@@ -1,5 +1,6 @@
 package org.ed;
 
+import java.io.Closeable;
 import java.util.List;
 
 /***
@@ -15,7 +16,7 @@ import java.util.List;
  *
  * @param <T>
  */
-public interface Repository<T extends AggregateRoot> {
+public interface Repository<T extends AggregateRoot> extends Closeable {
 	/***
 	 * 为业务做快照
 	 * <p>

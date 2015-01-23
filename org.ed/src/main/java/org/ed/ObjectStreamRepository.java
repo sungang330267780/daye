@@ -40,6 +40,9 @@ public class ObjectStreamRepository<T extends AggregateRoot> implements Reposito
 	 * 文件channel缓存
 	 */
 	private Map<String, FileChannel> fileChannelCache;
+	/**
+	 * 对象输出流缓存
+	 */
 	private Map<FileChannel, FSTObjectOutput> objectOutputCache;
 	/***
 	 * 业务实体缓存
