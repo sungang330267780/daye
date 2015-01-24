@@ -29,6 +29,10 @@ public class ObjectStreamRepository<T extends AggregateRoot> implements Reposito
 	 */
 	private final String EVENT_SUFFIX = ".evt";
 	/***
+	 * 快照历史记录
+	 */
+	private final String SNAP_HIS_SUFFIX = ".snaphis";
+	/***
 	 * 业务实例构造器
 	 */
 	private Function<String, T> creator;
@@ -48,6 +52,9 @@ public class ObjectStreamRepository<T extends AggregateRoot> implements Reposito
 	 * 业务实体缓存
 	 */
 	private Map<String, AggregateRoot> aggRootCache;
+	/**
+	 * 事件总线
+	 */
 	private EventBus eventBus;
 
 	public ObjectStreamRepository(String repositoryStorageDir, String name, Function<String, T> creator, EventBus eventBus) {
@@ -78,6 +85,7 @@ public class ObjectStreamRepository<T extends AggregateRoot> implements Reposito
 			FSTObjectOutput snap_fstoo = null;
 			try {
 
+				Files.write(this.repositoryStorageDir.resolve(id+ SNAP_HIS_SUFFIX), Files.readAllBytes(file.toPath()), StandardOpenOption.APPEND);
 				file.delete();
 				// begin重新建立快照
 				file.createNewFile();
@@ -190,6 +198,7 @@ public class ObjectStreamRepository<T extends AggregateRoot> implements Reposito
 		newAgg.setRepository(this);
 		Path snap_file = this.repositoryStorageDir.resolve(id + SNAPSHOT_SUFFIX);
 		Path evt_file = this.repositoryStorageDir.resolve(id + EVENT_SUFFIX);
+		Path snap_his_file = this.repositoryStorageDir.resolve(id + SNAP_HIS_SUFFIX);
 
 		FileChannel snap_channel = null;
 		FSTObjectOutput snap_fstoo = null;
@@ -197,6 +206,7 @@ public class ObjectStreamRepository<T extends AggregateRoot> implements Reposito
 			// 由于id唯一性，没有判断快照文件和事件文件是否存在，而是按不存在处理，直接创建两个文件
 			snap_file.toFile().createNewFile();
 			evt_file.toFile().createNewFile();
+			snap_his_file.toFile().createNewFile();
 
 			// 写入原始快照
 			snap_channel = FileChannel.open(snap_file, StandardOpenOption.WRITE);
@@ -244,7 +254,7 @@ public class ObjectStreamRepository<T extends AggregateRoot> implements Reposito
 		try {
 			fstoo.writeObject(em);
 			i++;
-			if (i % 1000 == 0)
+			if (i % 1 == 0)
 				fstoo.flush();
 		} catch (IOException e) {
 		}
