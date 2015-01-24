@@ -9,6 +9,7 @@ import java.nio.channels.FileChannel;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,6 +33,7 @@ public class ObjectStreamRepository<T extends AggregateRoot> implements Reposito
 	 * 快照历史记录
 	 */
 	private final String SNAP_HIS_SUFFIX = ".snaphis";
+	private final String BACKUP_DIR = "bak";
 	/***
 	 * 业务实例构造器
 	 */
@@ -40,6 +42,7 @@ public class ObjectStreamRepository<T extends AggregateRoot> implements Reposito
 	 * 资料库存储目录
 	 */
 	private Path repositoryStorageDir;
+	private Path repositoryStorageBackupDir;
 	/***
 	 * 文件channel缓存
 	 */
@@ -60,6 +63,7 @@ public class ObjectStreamRepository<T extends AggregateRoot> implements Reposito
 	public ObjectStreamRepository(String repositoryStorageDir, String name, Function<String, T> creator, EventBus eventBus) {
 		this.eventBus = eventBus;
 		this.repositoryStorageDir = FileSystems.getDefault().getPath(repositoryStorageDir, name);
+		this.repositoryStorageBackupDir = this.repositoryStorageDir.resolve(BACKUP_DIR);
 		this.creator = creator;
 		this.eventBus = eventBus;
 
@@ -69,6 +73,13 @@ public class ObjectStreamRepository<T extends AggregateRoot> implements Reposito
 		if (!Files.exists(this.repositoryStorageDir))
 			try {
 				Files.createDirectories(this.repositoryStorageDir);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		
+		if (!Files.exists(this.repositoryStorageBackupDir))
+			try {
+				Files.createDirectories(this.repositoryStorageBackupDir);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
@@ -254,13 +265,39 @@ public class ObjectStreamRepository<T extends AggregateRoot> implements Reposito
 		try {
 			fstoo.writeObject(em);
 			i++;
-			if (i % 1 == 0)
+			if (i % 100 == 0)
 				fstoo.flush();
 		} catch (IOException e) {
 		}
 
 		if (eventBus != null) {
 			eventBus.publish(em);
+		}
+		
+		if(em instanceof CompletedEventMessage) {
+			snapshot(em.getAggRootId());
+			try {
+				fstoo.close();
+				getFileChannel(evt_file).close();
+				aggRootCache.remove(em.getAggRootId());
+				bakupAgg(em.getAggRootId());
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+	}
+
+	private void bakupAgg(String id) {
+		Path snap_file = this.repositoryStorageDir.resolve(id + SNAPSHOT_SUFFIX);
+		Path evt_file = this.repositoryStorageDir.resolve(id + EVENT_SUFFIX);
+		Path snap_his_file = this.repositoryStorageDir.resolve(id + SNAP_HIS_SUFFIX);
+		
+		try {
+			Files.move(snap_file, this.repositoryStorageBackupDir.resolve(snap_file.getFileName()), StandardCopyOption.ATOMIC_MOVE);
+			Files.move(evt_file, this.repositoryStorageBackupDir.resolve(evt_file.getFileName()), StandardCopyOption.ATOMIC_MOVE);
+			Files.move(snap_his_file, this.repositoryStorageBackupDir.resolve(snap_his_file.getFileName()), StandardCopyOption.ATOMIC_MOVE);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
 	}
 

@@ -18,6 +18,7 @@ public abstract class AggregateRoot implements Serializable {
 
 	private Set<SubAggregate> subAggSet = new HashSet<SubAggregate>();
 	private String id;
+	private boolean completed = false;
 
 	void setRepository(Repository<?> repository) {
 		this.repository = repository;
@@ -44,19 +45,28 @@ public abstract class AggregateRoot implements Serializable {
 	}
 
 	protected void apply(EventMessage event) {
-		EventHandlerTypeCache.invoke(this, event);
 
-		for (SubAggregate subAgg : subAggSet) {
-			EventHandlerTypeCache.invoke(subAgg, event);
-		}
+		if (!completed) {
+			EventHandlerTypeCache.invoke(this, event);
 
-		if (repository != null) {
-			event.setAggRootId(getId());
-			repository.addEvent(event);
+			for (SubAggregate subAgg : subAggSet) {
+				EventHandlerTypeCache.invoke(subAgg, event);
+			}
+
+			if (event instanceof CompletedEventMessage) {
+				this.completed = true;
+			}
+
+			if (repository != null) {
+				event.setAggRootId(getId());
+				repository.addEvent(event);
+			}
 		}
 	}
 
-	public abstract boolean isComplete();
+	public boolean isCompleted() {
+		return this.completed;
+	}
 
 	public void registerSubAggregate(SubAggregate sa) {
 
