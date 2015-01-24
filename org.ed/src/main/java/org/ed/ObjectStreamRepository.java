@@ -150,7 +150,7 @@ public class ObjectStreamRepository<T extends AggregateRoot> implements Reposito
 			FSTObjectInput evt_fstoi = new FSTObjectInput();
 
 			int count = 0;
-			while (position != evt_channel.size()) {
+			while (position + evt_fstoi.getCodec().getInputPos() != evt_channel.size()) {
 
 				if (count % 10000 == 0) {
 					position += evt_fstoi.getCodec().getInputPos();
