@@ -1,8 +1,6 @@
 package org.ed;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -81,10 +79,7 @@ public class DisruptorEventBus implements EventBus {
 
 		@Override
 		public void onEvent(DisruptorEvent event, long sequence, boolean endOfBatch) throws Exception {
-			List<Method> list = EventHandlerTypeCache.getMethods(obj.getClass(), event.event.getClass());
-			for (Method m : list) {
-				m.invoke(obj, event.event);
-			}
+			EventHandlerTypeCache.invoke(obj, event.event);
 		}
 	}
 }
